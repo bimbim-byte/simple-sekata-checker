@@ -1,0 +1,6 @@
+argparse
+requests
+appdirs
+beautifulsoup4
+flask
+pandas

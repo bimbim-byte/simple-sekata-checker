@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Validasi Kata Sekata</title>
+<style>
+    html, body { height:100%; margin:0; font-family: Arial,sans-serif; }
+    body { display:flex; justify-content:center; align-items:center; background-color:#f0f0f0; flex-direction:column; transition: background-color 0.5s ease; }
+    #bgLayer { position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:#f0f0f0; z-index:-1; transition: background-color 0.5s ease; }
+    #status { position:absolute; top:10%; font-size:64px; font-weight:bold; text-align:center; color:white; text-shadow:2px 2px 5px rgba(0,0,0,0.3); opacity:0; transition:opacity 0.3s ease; width:100%; }
+    #kataInput { font-size:36px; padding:15px 20px; border-radius:10px; border:2px solid #ccc; text-align:center; outline:none; width:400px; transition: transform 0.2s ease; z-index:1; position:relative; }
+    #kataInput:focus { border-color:#666; transform:scale(1.05); }
+    #definisi { margin-top: 20px; max-width: 800px; text-align:center; }
+
+    /* Styling baru sesuai permintaan */
+    .pelafalan-kata-dasar { text-align:center; margin-bottom:20px; }
+    .kata-dasar, .pelafalan { font-weight:bold; font-size:36px; color:white; }
+    .makna-item { margin-bottom:10px; font-size:22px; text-align:left; }
+    .kelas { color:blue; font-weight:bold; }
+    .submakna { color:#000000; }
+    .contoh { color:yellow; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div id="bgLayer"></div>
+<div id="status"></div>
+<input type="text" id="kataInput" placeholder="Ketik kata sekata..." autofocus>
+<div id="definisi"></div>
+
+<script>
+const input = document.getElementById('kataInput');
+const status = document.getElementById('status');
+const bgLayer = document.getElementById('bgLayer');
+const definisiDiv = document.getElementById('definisi');
+
+input.addEventListener('keypress', function(event) {
+    if(event.key === 'Enter') {
+        const kata = input.value.trim();
+        if(!kata) return;
+
+        fetch('/cek_kata', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({kata: kata})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'valid') {
+                bgLayer.style.backgroundColor = "#28a745"; // hijau
+                status.textContent = "VALID";
+                definisiDiv.innerHTML = data.definisi;
+            } else {
+                bgLayer.style.backgroundColor = "#dc3545"; // merah
+                status.textContent = "INVALID";
+                definisiDiv.textContent = data.message;
+            }
+            status.style.opacity = "1";
+            input.value = "";
+            setTimeout(() => { status.style.opacity = "0"; }, 1500);
+        })
+        .catch(err => {
+            console.error(err);
+            bgLayer.style.backgroundColor = "#ffc107"; // kuning
+            status.textContent = "ERROR";
+            status.style.opacity = "1";
+        });
+    }
+});
+</script>
+
+</body>
+</html>
