@@ -6,7 +6,8 @@ PS. This program was created solely to make it easier for me to find standard wo
 ~ update soon ~
 
 # Running HTML Static
-just open kbbi_checker_simple.html
+just open "kbbi_checker_simple.html"
+or click this website https://bimbim-byte.github.io/simple-sekata-checker/kbbi_checker_simple.html
 
 # Running from source
 1) Clone Repository
