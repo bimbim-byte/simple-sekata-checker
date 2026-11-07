@@ -1,7 +1,10 @@
 import re
+
 import pandas as pd
 
-df = pd.read_csv('data_kata/kbbi_v.csv') 
+import config
+
+df = pd.read_csv(config.DATA_CSV)
 kolom_a = df.iloc[:, 0]
 pattern = re.compile(r'[^a-zA-Z\s]')
 
@@ -25,7 +28,7 @@ for baris in kolom_a:
 # Hapus duplikat dan urutkan
 kata_unik = sorted(set(kata_list))
 
-file_name = 'data_kata/kbbi_edited.txt'
+file_name = config.DATA_TXT
 with open(file_name, 'w', encoding='utf-8') as f:
     for kata in kata_unik:
         f.write(kata + '\n')
@@ -35,7 +38,7 @@ print("Pembersihan daftar kata selesai. Disimpan di {}".format(file_name))
 # Data txt untuk dicopy ke html (not using internet)
 with_string = ",".join(f'"{item}"' for item in kata_unik)
 
-file_name = 'data_kata/open_and_copy.txt'
+file_name = config.DATA_DIR / 'open_and_copy.txt'
 with open(file_name, 'w', encoding='utf-8') as f:
     f.write(with_string)
 

@@ -1,6 +1,12 @@
-argparse
-requests
-appdirs
-beautifulsoup4
-flask
-pandas
+# Dependensi runtime server (main.py)
+Flask>=3.0
+requests>=2.31
+appdirs>=1.4
+beautifulsoup4>=4.12
+markupsafe>=2.1
+
+# Dependensi pengolahan data (cleaning_kata.py, build_static_data.py)
+pandas>=2.0
+
+# Dependensi pengujian (opsional)
+pytest>=8.0

@@ -2,72 +2,274 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Validasi Kata Sekata</title>
 <style>
-    html, body { height:100%; margin:0; font-family: Arial,sans-serif; }
-    body { display:flex; justify-content:center; align-items:center; background-color:#f0f0f0; flex-direction:column; transition: background-color 0.5s ease; }
-    #bgLayer { position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:#f0f0f0; z-index:-1; transition: background-color 0.5s ease; }
-    #status { position:absolute; top:10%; font-size:64px; font-weight:bold; text-align:center; color:white; text-shadow:2px 2px 5px rgba(0,0,0,0.3); opacity:0; transition:opacity 0.3s ease; width:100%; }
-    #kataInput { font-size:36px; padding:15px 20px; border-radius:10px; border:2px solid #ccc; text-align:center; outline:none; width:400px; transition: transform 0.2s ease; z-index:1; position:relative; }
-    #kataInput:focus { border-color:#666; transform:scale(1.05); }
-    #definisi { margin-top: 20px; max-width: 800px; text-align:center; }
+    :root {
+        --bg: #f0f0f0;
+        --fg: #1a1a1a;
+        --panel: #ffffff;
+        --muted: #666;
+        --accent: #2563eb;
+        --valid: #28a745;
+        --invalid: #dc3545;
+        --warning: #ffc107;
+    }
+    html[data-theme="dark"] {
+        --bg: #121417;
+        --fg: #e8eaed;
+        --panel: #1c1f24;
+        --muted: #9aa0a6;
+        --accent: #7aa2ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+    body {
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        background-color: var(--bg); color: var(--fg); padding: 16px;
+        transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    #bgLayer { position: fixed; inset: 0; z-index: -1; background-color: var(--bg); transition: background-color 0.4s ease; }
+    #themeToggle {
+        position: fixed; top: 12px; right: 12px; z-index: 5;
+        display: flex; align-items: center; gap: 8px;
+        background: var(--panel); color: var(--fg); border: 1px solid rgba(128,128,128,0.3);
+        border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 14px;
+    }
+    .switch {
+        position: relative; width: 40px; height: 22px; border-radius: 999px;
+        background: #b9bcc1; transition: background 0.2s ease; flex: 0 0 auto;
+    }
+    html[data-theme="dark"] .switch { background: var(--accent); }
+    .switch::after {
+        content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+        border-radius: 50%; background: #fff; transition: transform 0.2s ease;
+    }
+    html[data-theme="dark"] .switch::after { transform: translateX(18px); }
+    #status {
+        position: fixed; top: 8%; left: 0; width: 100%; text-align: center;
+        font-size: clamp(28px, 8vw, 64px); font-weight: 800; color: #fff;
+        text-shadow: 2px 2px 6px rgba(0,0,0,0.35); opacity: 0;
+        transition: opacity 0.3s ease; pointer-events: none;
+    }
+    main { width: 100%; max-width: 820px; display: flex; flex-direction: column; align-items: center; }
+    #kataInput {
+        font-size: clamp(20px, 5vw, 36px); padding: 14px 18px; border-radius: 12px;
+        border: 2px solid #ccc; text-align: center; outline: none; width: 100%; max-width: 460px;
+        background: var(--panel); color: var(--fg); transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    #kataInput:focus { border-color: var(--accent); transform: scale(1.02); }
+    #definisi { margin-top: 20px; width: 100%; text-align: center; }
+    .pelafalan-kata-dasar { text-align: center; margin-bottom: 18px; }
+    .kata-dasar, .pelafalan { font-weight: 800; font-size: clamp(24px, 6vw, 36px); color: var(--fg); }
+    .makna-item { margin-bottom: 10px; font-size: clamp(15px, 3.4vw, 20px); text-align: left; line-height: 1.5; }
+    .kelas { color: var(--accent); font-weight: 700; }
+    .submakna { color: var(--fg); }
+    .contoh { color: var(--muted); font-style: italic; }
+    .pesan { color: var(--muted); font-size: clamp(15px, 3.4vw, 20px); }
 
-    /* Styling baru sesuai permintaan */
-    .pelafalan-kata-dasar { text-align:center; margin-bottom:20px; }
-    .kata-dasar, .pelafalan { font-weight:bold; font-size:36px; color:white; }
-    .makna-item { margin-bottom:10px; font-size:22px; text-align:left; }
-    .kelas { color:blue; font-weight:bold; }
-    .submakna { color:#000000; }
-    .contoh { color:yellow; font-style:italic; }
+    /* Input suara */
+    .input-row { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 460px; }
+    #kataInput { flex: 1 1 auto; }
+    #micBtn {
+        flex: 0 0 auto; width: 58px; height: 58px; border-radius: 50%; cursor: pointer;
+        border: 2px solid var(--accent); background: var(--panel); color: var(--accent);
+        font-size: 24px; display: flex; align-items: center; justify-content: center;
+        transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    #micBtn:hover { transform: scale(1.06); }
+    #micBtn.listening {
+        background: var(--invalid); border-color: var(--invalid); color: #fff;
+        animation: pulse 1.2s infinite;
+    }
+    #micBtn:disabled { opacity: 0.45; cursor: not-allowed; animation: none; }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.55); }
+        70% { box-shadow: 0 0 0 14px rgba(220,53,69,0); }
+        100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    }
+    #micHint { margin-top: 8px; font-size: 13px; color: var(--muted); min-height: 18px; text-align: center; }
 </style>
 </head>
 <body>
-
 <div id="bgLayer"></div>
 <div id="status"></div>
-<input type="text" id="kataInput" placeholder="Ketik kata sekata..." autofocus>
-<div id="definisi"></div>
+
+<button id="themeToggle" type="button" aria-pressed="false">
+    <span id="themeLabel">Terang</span><span class="switch" aria-hidden="true"></span>
+</button>
+
+<main>
+    <div class="input-row">
+        <input type="text" id="kataInput" placeholder="Ketik atau ucapkan kata..." autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+        <button id="micBtn" type="button" title="Ucapkan satu kata" aria-label="Mulai input suara">🎤</button>
+    </div>
+    <div id="micHint"></div>
+    <div id="definisi"></div>
+</main>
 
 <script>
-const input = document.getElementById('kataInput');
-const status = document.getElementById('status');
-const bgLayer = document.getElementById('bgLayer');
-const definisiDiv = document.getElementById('definisi');
+(function () {
+    "use strict";
 
-input.addEventListener('keypress', function(event) {
-    if(event.key === 'Enter') {
-        const kata = input.value.trim();
-        if(!kata) return;
+    var input = document.getElementById("kataInput");
+    var status = document.getElementById("status");
+    var bgLayer = document.getElementById("bgLayer");
+    var definisiDiv = document.getElementById("definisi");
+    var toggle = document.getElementById("themeToggle");
+    var themeLabel = document.getElementById("themeLabel");
 
-        fetch('/cek_kata', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({kata: kata})
+    function setTheme(mode) {
+        document.documentElement.setAttribute("data-theme", mode);
+        try { localStorage.setItem("sekata-theme", mode); } catch (e) {}
+        themeLabel.textContent = mode === "dark" ? "Gelap" : "Terang";
+        toggle.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+    }
+    var tersimpan = null;
+    try { tersimpan = localStorage.getItem("sekata-theme"); } catch (e) {}
+    setTheme(tersimpan === "dark" ? "dark" : "terang");
+    toggle.addEventListener("click", function () {
+        setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "terang" : "dark");
+    });
+
+    function tampilkan(warna, teks, isi) {
+        bgLayer.style.backgroundColor = warna;
+        status.textContent = teks;
+        status.style.opacity = "1";
+        definisiDiv.innerHTML = isi || "";
+        setTimeout(function () { status.style.opacity = "0"; }, 1500);
+    }
+
+    // Normalisasi: ambil HANYA satu kata (buang tanda baca & pengulangan).
+    function ambilSatuKata(teks) {
+        if (!teks) return "";
+        var bersih = String(teks).toLowerCase().replace(/[^a-z\s]/g, " ");
+        var kata = bersih.split(/\s+/).filter(Boolean);
+        return kata.length ? kata[0] : "";
+    }
+
+    function prosesKata(kata) {
+        if (!kata) return;
+        fetch("/cek_kata", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kata: kata })
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.status === 'valid') {
-                bgLayer.style.backgroundColor = "#28a745"; // hijau
-                status.textContent = "VALID";
-                definisiDiv.innerHTML = data.definisi;
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            if (data.status === "valid") {
+                tampilkan("var(--valid)", "VALID", data.definisi);
             } else {
-                bgLayer.style.backgroundColor = "#dc3545"; // merah
-                status.textContent = "INVALID";
-                definisiDiv.textContent = data.message;
+                tampilkan("var(--invalid)", "INVALID", "<div class='pesan'>" + (data.message || "Kata tidak valid.") + "</div>");
             }
-            status.style.opacity = "1";
-            input.value = "";
-            setTimeout(() => { status.style.opacity = "0"; }, 1500);
         })
-        .catch(err => {
+        .catch(function (err) {
             console.error(err);
-            bgLayer.style.backgroundColor = "#ffc107"; // kuning
-            status.textContent = "ERROR";
-            status.style.opacity = "1";
+            tampilkan("var(--warning)", "ERROR", "<div class='pesan'>Terjadi kesalahan saat menghubungi server.</div>");
         });
     }
-});
-</script>
 
+    input.addEventListener("keypress", function (event) {
+        if (event.key !== "Enter") return;
+        var kata = ambilSatuKata(input.value);
+        if (!kata) return;
+        input.value = "";
+        prosesKata(kata);
+    });
+
+    // ---------------- Input suara (Web Speech API) ----------------
+    var micBtn = document.getElementById("micBtn");
+    var micHint = document.getElementById("micHint");
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var mendengarkan = false;
+
+    // Kunci "hanya satu kata": ucapan yang sama dan berulang dalam jendela waktu
+    // ini akan diabaikan agar tidak memunculkan kata lebih dari sekali.
+    var kataTerakhir = "";
+    var waktuTerakhir = 0;
+    var COOLDOWN_MS = 2000;
+
+    if (!SpeechRecognition) {
+        micBtn.disabled = true;
+        micHint.textContent = "Perangkat/browser ini tidak mendukung input suara.";
+    } else {
+        var recog = new SpeechRecognition();
+        recog.lang = "id-ID";
+        recog.continuous = true;
+        recog.interimResults = false;
+        recog.maxAlternatives = 1;
+
+        var mauBerhenti = false;
+
+        function renderMic() {
+            micBtn.classList.toggle("listening", mendengarkan);
+            micBtn.textContent = mendengarkan ? "⏹" : "🎤";
+            micHint.textContent = mendengarkan ? "Mendengarkan… ucapkan satu kata." : "";
+        }
+
+        function tanganiSuara(teks) {
+            var kata = ambilSatuKata(teks);
+            if (!kata) return;
+
+            var sekarang = Date.now();
+            if (kata === kataTerakhir && sekarang - waktuTerakhir < COOLDOWN_MS) {
+                return;
+            }
+            kataTerakhir = kata;
+            waktuTerakhir = sekarang;
+
+            input.value = "";
+            prosesKata(kata);
+        }
+
+        recog.onresult = function (event) {
+            for (var i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    tanganiSuara(event.results[i][0].transcript);
+                }
+            }
+        };
+
+        recog.onerror = function (event) {
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                mauBerhenti = true;
+                mendengarkan = false;
+                renderMic();
+                micHint.textContent = "Izin mikrofon ditolak. Aktifkan izin lalu coba lagi.";
+            }
+        };
+
+        recog.onend = function () {
+            if (!mauBerhenti) {
+                try { recog.start(); return; } catch (e) {}
+            }
+            mendengarkan = false;
+            renderMic();
+        };
+
+        micBtn.addEventListener("click", function () {
+            if (mendengarkan) {
+                mauBerhenti = true;
+                mendengarkan = false;
+                renderMic();
+                try { recog.stop(); } catch (e) {}
+                return;
+            }
+            mauBerhenti = false;
+            try {
+                recog.start();
+                mendengarkan = true;
+                renderMic();
+            } catch (e) {
+                micHint.textContent = "Tidak dapat memulai mikrofon: " + e.message;
+            }
+        });
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && mendengarkan) micBtn.click();
+    });
+})();
+</script>
 </body>
 </html>
